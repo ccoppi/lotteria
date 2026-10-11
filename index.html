@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lotteria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+  --paper: #F2F4F7;
+  --card: #FFFFFF;
+  --ink: #17233B;
+  --muted: #58637A;
+  --line: #D5DAE4;
+  --band: #17233B;
+  --on-band: #F4F6FB;
+  --cta: #F2B01E;
+  --on-cta: #17233B;
+  --hit: #0F7F6B;
+  --on-hit: #FFFFFF;
+  --accent: #3B5BDB;
+  --danger: #B3261E;
+  --display: "Bricolage Grotesque", "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #0E1424;
+    --card: #161F36;
+    --ink: #EEF1F8;
+    --muted: #A4AEC4;
+    --line: #2B3654;
+    --band: #1B2745;
+    --on-band: #F4F6FB;
+    --hit: #2FCBA8;
+    --on-hit: #0E1424;
+    --accent: #8FA3FF;
+    --danger: #FF8A80;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0E1424;
+  --card: #161F36;
+  --ink: #EEF1F8;
+  --muted: #A4AEC4;
+  --line: #2B3654;
+  --band: #1B2745;
+  --on-band: #F4F6FB;
+  --hit: #2FCBA8;
+  --on-hit: #0E1424;
+  --accent: #8FA3FF;
+  --danger: #FF8A80;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); -webkit-text-size-adjust: 100%; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.hero :focus-visible { outline-color: #FFFFFF; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wrap { width: 100%; max-width: 640px; margin: 0 auto; padding: 0 16px; }
+
+/* Hero */
+.hero { background: var(--band); color: var(--on-band); padding: 22px 0 26px; }
+.hero h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 6.5vw, 2.1rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+.week { margin: 0 0 20px; opacity: 0.8; }
+.balls { --d: min(15.5vw, 76px); display: flex; gap: 8px; justify-content: center; }
+.ball {
+  width: var(--d);
+  height: var(--d);
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: calc(var(--d) * 0.42);
+  line-height: 1;
+  color: var(--on);
+  background: radial-gradient(circle at 32% 26%, rgba(255,255,255,0.5), rgba(255,255,255,0) 45%), var(--c);
+  box-shadow: inset 0 -4px 8px rgba(0,0,0,0.18), 0 4px 10px rgba(0,0,0,0.25);
+}
+.ball.socket {
+  background: none;
+  box-shadow: none;
+  border: 2px dashed rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.4);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ball.pop { animation: drop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+  @keyframes drop {
+    from { transform: translateY(-30px) scale(0.6); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+}
+.pot { margin: 20px 0 14px; text-align: center; font-size: 1.05rem; }
+.cta {
+  display: block;
+  width: 100%;
+  min-height: 54px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cta);
+  color: var(--on-cta);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+.cta[disabled] { opacity: 0.5; cursor: not-allowed; }
+.cta.ghost {
+  margin-top: 8px;
+  background: transparent;
+  color: var(--on-band);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  font-size: 1rem;
+  min-height: 48px;
+}
+.hint { margin: 12px 0 0; text-align: center; font-size: 0.92rem; opacity: 0.85; }
+.hint:empty { display: none; }
+
+/* Risultato */
+.result {
+  margin: 22px 0 0;
+  padding: 14px 16px;
+  border-left: 5px solid var(--accent);
+  background: var(--card);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+.result:empty { display: none; }
+
+/* Sezioni */
+main { padding-bottom: 40px; }
+.sec { margin-top: 30px; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 1.35rem; line-height: 1.2; margin: 0; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.count { color: var(--muted); font-size: 0.92rem; }
+
+/* Giocatori */
+.players { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.player { padding: 14px 0 14px 12px; border-bottom: 1px solid var(--line); border-left: 5px solid transparent; }
+.player.winner { border-left-color: var(--accent); background: var(--card); }
+.p-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 10px; }
+.name {
+  flex: 1 1 150px;
+  min-width: 0;
+  min-height: 40px;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px solid var(--line);
+  border-radius: 0;
+  padding: 4px 2px;
+}
+.status { font-size: 0.95rem; color: var(--muted); white-space: nowrap; }
+.status strong { color: var(--ink); }
+.picks { display: flex; gap: 6px; flex-wrap: wrap; }
+.pb {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+}
+.pb.empty { border-style: dashed; border-color: var(--line); color: transparent; }
+.pb.hit { background: var(--hit); border-color: var(--hit); color: var(--on-hit); }
+.pb.miss { border-color: var(--line); color: var(--muted); }
+.p-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.btn.quiet { border-color: var(--line); }
+.btn.danger { border-color: var(--danger); color: var(--danger); }
+.picker { margin-top: 12px; padding: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.picker p { margin: 0; font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 8px; margin: 10px 0 12px; }
+.num {
+  min-height: 46px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.num[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.num:disabled { opacity: 0.35; cursor: not-allowed; }
+.list-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+/* Impostazioni */
+details.box { margin-top: 30px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+details.box summary {
+  list-style-position: inside;
+  cursor: pointer;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+.box-body { padding: 0 0 16px; }
+.field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; }
+.field label { font-weight: 600; }
+.field select, .field input {
+  min-height: 44px;
+  min-width: 110px;
+  padding: 0 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1rem;
+  text-align: right;
+}
+.field select:disabled, .field input:disabled { opacity: 0.55; }
+.box-body ul { margin: 12px 0; padding-left: 1.2em; }
+.box-body li { margin: 6px 0; }
+.box-body p { margin: 10px 0; }
+.muted { color: var(--muted); }
+
+/* Storico */
+.hist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.hist li { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.h-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.h-top time { color: var(--muted); font-size: 0.9rem; }
+.mini { --d: 32px; display: flex; gap: 6px; margin: 8px 0; }
+.hist p { margin: 0; }
+.empty-note { color: var(--muted); margin: 8px 0 0; }
+.tally { margin: 12px 0 0; font-weight: 600; }
+
+/* Footer */
+.note { color: var(--muted); font-size: 0.9rem; margin: 30px 0 12px; }
+.note.tight { margin: 12px 0; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <h1>Lotteria di famiglia</h1>
+    <p class="week" id="week"></p>
+    <div class="balls" id="balls" role="group" aria-label="Numeri estratti"></div>
+    <p class="pot" id="pot"></p>
+    <div id="hero-actions"></div>
+    <p class="hint" id="hint"></p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="result" id="result" aria-live="polite"></div>
+
+  <section class="sec" aria-labelledby="h-players">
+    <div id="players-wrap"></div>
+  </section>
+
+  <details class="box" id="settings">
+    <summary>Regole e impostazioni</summary>
+    <div class="box-body">
+      <p class="muted" id="lock-note" hidden>Le impostazioni si cambiano a inizio settimana, dopo l'estrazione.</p>
+      <div class="field">
+        <label for="range">Numeri da 1 a</label>
+        <select id="range"></select>
+      </div>
+      <div class="field">
+        <label for="quota">Quota a testa (euro)</label>
+        <input id="quota" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+      <p id="odds"></p>
+      <ul>
+        <li>Ognuno sceglie 5 numeri diversi. Chi non ha 5 numeri resta fuori dalla settimana.</li>
+        <li>Ogni giocatore mette la quota nel piatto.</li>
+        <li>Si estraggono 5 numeri. Vince il piatto chi ne azzecca di più, da 2 in su. A pari numeri si divide.</li>
+        <li>Il 20% del piatto va nel jackpot. Se nessuno arriva a 2 numeri, nel jackpot va tutto il piatto.</li>
+        <li>Chi fa 5 su 5 prende il piatto più tutto il jackpot.</li>
+      </ul>
+    </div>
+  </details>
+
+  <section class="sec" aria-labelledby="h-hist">
+    <div class="sec-head"><h2 id="h-hist">Estrazioni passate</h2></div>
+    <div id="hist"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'lotteria-famiglia-v1';
+  var PICKS = 5;
+  var MAX_PLAYERS = 10;
+  var SHARE = 0.2;
+  var RANGES = [10, 15, 20, 30, 40, 90];
+  var COLORS = [
+    ['#D93F2B', '#FFFFFF'],
+    ['#F2B01E', '#17233B'],
+    ['#0F7F6B', '#FFFFFF'],
+    ['#3B5BDB', '#FFFFFF'],
+    ['#C2307F', '#FFFFFF']
+  ];
+  var money = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+  var intFmt = new Intl.NumberFormat('it-IT');
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function eur(cents) { return money.format(cents / 100); }
+  function uid() { return Math.random().toString(36).slice(2, 9); }
+  function byNum(a, b) { return a - b; }
+
+  function defaults() {
+    var players = [];
+    for (var i = 1; i <= 6; i++) players.push({ id: uid(), name: 'Giocatore ' + i });
+    return {
+      range: 20,
+      quotaCents: 200,
+      players: players,
+      picks: {},
+      drawn: null,
+      result: null,
+      carry: 0,
+      history: [],
+      week: 1
+    };
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && Array.isArray(s.players) && s.players.length >= 2 && typeof s.range === 'number') {
+          var d = Object.assign(defaults(), s);
+          if (!d.picks || typeof d.picks !== 'object') d.picks = {};
+          if (!Array.isArray(d.history)) d.history = [];
+          if (d.drawn && !d.result) d.drawn = null;
+          return d;
+        }
+      }
+    } catch (e) { /* storage non disponibile o dati rovinati */ }
+    return defaults();
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignora */ }
+  }
+
+  var state = load();
+  var openId = null;
+  var revealCount = state.drawn ? PICKS : 0;
+  var revealing = false;
+  var timer = null;
+  var confirmReset = false;
+
+  /* ---------- Casualità ---------- */
+  function randInt(n) {
+    if (window.crypto && window.crypto.getRandomValues) {
+      var a = new Uint32Array(1);
+      var lim = Math.floor(4294967296 / n) * n;
+      do { window.crypto.getRandomValues(a); } while (a[0] >= lim);
+      return a[0] % n;
+    }
+    return Math.floor(Math.random() * n);
+  }
+  function sample(range, k) {
+    var pool = [];
+    for (var i = 1; i <= range; i++) pool.push(i);
+    for (var j = 0; j < k; j++) {
+      var r = j + randInt(pool.length - j);
+      var t = pool[j]; pool[j] = pool[r]; pool[r] = t;
+    }
+    return pool.slice(0, k);
+  }
+  function comb(n, k) {
+    if (k < 0 || k > n) return 0;
+    var r = 1;
+    for (var i = 1; i <= k; i++) r = r * (n - k + i) / i;
+    return Math.round(r);
+  }
+
+  /* ---------- Logica ---------- */
+  function eligible() {
+    return state.players.filter(function (p) { return (state.picks[p.id] || []).length === PICKS; });
+  }
+  function joinNames(a) {
+    if (a.length <= 1) return a.join('');
+    return a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
+  }
+
+  function computeResult() {
+    var drawnSet = new Set(state.drawn);
+    var entries = eligible().map(function (p) {
+      var picks = state.picks[p.id].slice().sort(byNum);
+      var hits = picks.filter(function (n) { return drawnSet.has(n); }).length;
+      return { id: p.id, name: p.name, picks: picks, hits: hits, prize: 0 };
+    });
+    var pot = entries.length * state.quotaCents;
+    var carryBefore = state.carry;
+    var max = entries.reduce(function (m, e) { return Math.max(m, e.hits); }, 0);
+    var share = Math.round(pot * SHARE);
+    var winners = [];
+    var each = 0;
+    var carryAfter;
+    var jackpotWon = false;
+
+    if (max === PICKS) {
+      jackpotWon = true;
+      winners = entries.filter(function (e) { return e.hits === PICKS; });
+      var total = pot + carryBefore;
+      each = Math.floor(total / winners.length);
+      carryAfter = total - each * winners.length;
+    } else if (max >= 2) {
+      winners = entries.filter(function (e) { return e.hits === max; });
+      var prize = pot - share;
+      each = Math.floor(prize / winners.length);
+      carryAfter = carryBefore + share + (prize - each * winners.length);
+    } else {
+      carryAfter = carryBefore + pot;
+    }
+    winners.forEach(function (w) { w.prize = each; });
+
+    var names = winners.map(function (w) { return w.name; });
+    var summary;
+    if (jackpotWon) {
+      summary = winners.length === 1
+        ? 'Jackpot! ' + names[0] + ' fa 5 su 5 e porta a casa ' + eur(each) + '.'
+        : 'Jackpot! ' + joinNames(names) + ' fanno 5 su 5: ' + eur(each) + ' a testa.';
+    } else if (winners.length) {
+      summary = (winners.length === 1
+        ? 'Vince ' + names[0] + ' con ' + max + ' numeri: ' + eur(each) + '.'
+        : 'Vincono ' + joinNames(names) + ' con ' + max + ' numeri: ' + eur(each) + ' a testa.')
+        + ' Il jackpot è a ' + eur(carryAfter) + '.';
+    } else {
+      summary = 'Nessuno arriva a 2 numeri: tutto il piatto passa al jackpot, che sale a ' + eur(carryAfter) + '.';
+    }
+
+    return {
+      entries: entries,
+      pot: pot,
+      carryBefore: carryBefore,
+      carryAfter: carryAfter,
+      max: max,
+      winnerIds: winners.map(function (w) { return w.id; }),
+      each: each,
+      jackpotWon: jackpotWon,
+      summary: summary
+    };
+  }
+
+  function draw() {
+    if (state.drawn || revealing) return;
+    if (eligible().length < 2) return;
+    state.drawn = sample(state.range, PICKS);
+    var res = computeResult();
+    state.result = res;
+    state.history.unshift({
+      week: state.week,
+      date: new Date().toISOString(),
+      drawn: state.drawn.slice(),
+      summary: res.summary,
+      winners: res.entries.filter(function (e) { return res.winnerIds.indexOf(e.id) !== -1; })
+        .map(function (e) { return e.name; }),
+      jackpotWon: res.jackpotWon
+    });
+    if (state.history.length > 200) state.history.length = 200;
+    state.carry = res.carryAfter;
+    save();
+    openId = null;
+
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      revealCount = PICKS;
+      revealing = false;
+      render();
+      return;
+    }
+    revealing = true;
+    revealCount = 1;
+    render();
+    timer = setInterval(function () {
+      revealCount++;
+      if (revealCount >= PICKS) {
+        clearInterval(timer);
+        timer = null;
+        revealing = false;
+      }
+      render();
+    }, 800);
+  }
+
+  function newWeek(keep) {
+    if (!state.drawn || revealing) return;
+    state.week++;
+    state.drawn = null;
+    state.result = null;
+    if (!keep) state.picks = {};
+    openId = null;
+    revealCount = 0;
+    save();
+    render();
+  }
+
+  function togglePick(id, n) {
+    var arr = (state.picks[id] || []).slice();
+    var i = arr.indexOf(n);
+    if (i !== -1) arr.splice(i, 1);
+    else if (arr.length < PICKS) arr.push(n);
+    state.picks[id] = arr.sort(byNum);
+    save();
+  }
+
+  /* ---------- Rendering ---------- */
+  function ballHtml(n, i, extra) {
+    var c = COLORS[i % COLORS.length];
+    return '<span class="ball' + (extra || '') + '" style="--c:' + c[0] + ';--on:' + c[1] + '">' + n + '</span>';
+  }
+
+  function renderHero() {
+    var locked = !!state.drawn;
+    var n = eligible().length;
+    var shown = locked ? state.drawn.slice(0, revealCount) : [];
+    var balls = '';
+    for (var i = 0; i < PICKS; i++) {
+      if (i < shown.length) {
+        balls += ballHtml(shown[i], i, revealing && i === shown.length - 1 ? ' pop' : '');
+      } else {
+        balls += '<span class="ball socket" aria-hidden="true">?</span>';
+      }
+    }
+    var balls$ = $('#balls');
+    balls$.innerHTML = balls;
+    balls$.setAttribute('aria-label', shown.length
+      ? 'Numeri estratti: ' + shown.join(', ')
+      : 'Numeri estratti: nessuno per ora');
+
+    $('#week').textContent = 'Settimana ' + state.week;
+
+    var pot = locked ? state.result.pot : n * state.quotaCents;
+    var jp = locked && revealing ? state.result.carryBefore : state.carry;
+    $('#pot').textContent = 'Piatto ' + eur(pot) + ', jackpot ' + eur(jp);
+
+    var actions = '';
+    var hint = '';
+    if (!locked) {
+      var can = n >= 2;
+      actions = '<button type="button" class="cta" data-act="draw"' + (can ? '' : ' disabled') + '>Estrai i 5 numeri</button>';
+      if (!can) hint = 'Servono almeno 2 giocatori con 5 numeri: per ora ' + n + '.';
+      else if (n < state.players.length) hint = 'Chi non ha 5 numeri resta fuori da questa settimana.';
+    } else if (revealing) {
+      actions = '<button type="button" class="cta" disabled>Estrazione in corso</button>';
+    } else {
+      actions = '<button type="button" class="cta" data-act="new-same">Nuova settimana, stessi numeri</button>' +
+                '<button type="button" class="cta ghost" data-act="new-fresh">Nuova settimana, numeri nuovi</button>';
+    }
+    $('#hero-actions').innerHTML = actions;
+    $('#hint').textContent = hint;
+  }
+
+  function renderResult() {
+    var el = $('#result');
+    if (state.drawn && !revealing && state.result) el.textContent = state.result.summary;
+    else el.textContent = '';
+  }
+
+  function renderPlayers() {
+    var locked = !!state.drawn;
+    var showRes = locked && !revealing;
+    var elig = eligible().length;
+    var resMap = {};
+    var winSet = {};
+    if (showRes) {
+      state.result.entries.forEach(function (e) { resMap[e.id] = e; });
+      state.result.winnerIds.forEach(function (id) { winSet[id] = true; });
+    }
+    var list = state.players.slice();
+    if (showRes) {
+      list.sort(function (a, b) {
+        var ha = resMap[a.id] ? resMap[a.id].hits : -1;
+        var hb = resMap[b.id] ? resMap[b.id].hits : -1;
+        return hb - ha;
+      });
+    }
+    var drawnSet = new Set(state.drawn || []);
+
+    var html = '<div class="sec-head"><h2 id="h-players">Schedine</h2>' +
+      '<span class="count">Giocano ' + elig + ' su ' + state.players.length + '</span></div>' +
+      '<ul class="players">';
+
+    list.forEach(function (p) {
+      var picks = (state.picks[p.id] || []).slice().sort(byNum);
+      var e = showRes ? resMap[p.id] : null;
+      var isWin = !!winSet[p.id];
+      var slots = '';
+      for (var i = 0; i < PICKS; i++) {
+        var n = picks[i];
+        if (n == null) {
+          slots += '<span class="pb empty" aria-hidden="true">0</span>';
+        } else {
+          var cls = 'pb';
+          var sr = '';
+          if (showRes && e) {
+            var hit = drawnSet.has(n);
+            cls += hit ? ' hit' : ' miss';
+            sr = '<span class="sr">' + (hit ? ', azzeccato' : ', non uscito') + '</span>';
+          }
+          slots += '<span class="' + cls + '">' + n + sr + '</span>';
+        }
+      }
+
+      var status;
+      if (showRes && e) {
+        status = '<strong>' + e.hits + ' su 5</strong>' + (isWin ? ', vince <strong>' + eur(e.prize) + '</strong>' : '');
+      } else if (showRes) {
+        status = 'Fuori, schedina incompleta';
+      } else if (locked) {
+        status = picks.length === PICKS ? 'In gioco' : 'Fuori, schedina incompleta';
+      } else {
+        status = picks.length === PICKS ? 'Pronta' : picks.length + ' di 5 numeri';
+      }
+
+      html += '<li class="player' + (isWin ? ' winner' : '') + '">' +
+        '<div class="p-top">' +
+          '<input class="name" type="text" maxlength="24" value="' + esc(p.name) + '" data-id="' + p.id + '" aria-label="Nome del giocatore"' + (locked ? ' readonly' : '') + '>' +
+          '<span class="status">' + status + '</span>' +
+        '</div>' +
+        '<div class="picks">' + slots + '</div>';
+
+      if (!locked) {
+        var open = openId === p.id;
+        html += '<div class="p-actions">' +
+          '<button type="button" class="btn" data-act="toggle" data-id="' + p.id + '" aria-expanded="' + open + '">' +
+            (open ? 'Chiudi' : (picks.length === PICKS ? 'Cambia' : 'Scegli')) + '</button>' +
+          '<button type="button" class="btn quiet" data-act="random" data-id="' + p.id + '">A caso</button>' +
+          (state.players.length > 2 ? '<button type="button" class="btn quiet" data-act="remove" data-id="' + p.id + '">Togli</button>' : '') +
+        '</div>';
+
+        if (open) {
+          var full = picks.length >= PICKS;
+          var grid = '';
+          for (var k = 1; k <= state.range; k++) {
+            var sel = picks.indexOf(k) !== -1;
+            grid += '<button type="button" class="num" data-act="num" data-id="' + p.id + '" data-n="' + k + '" aria-pressed="' + sel + '"' +
+              (full && !sel ? ' disabled' : '') + '>' + k + '</button>';
+          }
+          html += '<div class="picker" role="group" aria-label="Scegli 5 numeri per ' + esc(p.name) + '">' +
+            '<p>' + picks.length + ' di 5 scelti' + (full ? '. Togline uno per cambiare.' : '') + '</p>' +
+            '<div class="grid">' + grid + '</div>' +
+            '<button type="button" class="btn" data-act="done">Fatto</button>' +
+          '</div>';
+        }
+      }
+      html += '</li>';
+    });
+    html += '</ul>';
+
+    if (!locked) {
+      var missing = state.players.length - elig;
+      html += '<div class="list-actions">';
+      if (state.players.length < MAX_PLAYERS) html += '<button type="button" class="btn" data-act="add">Aggiungi giocatore</button>';
+      if (missing > 0) html += '<button type="button" class="btn quiet" data-act="fill">Compila a caso chi manca</button>';
+      html += '</div>';
+    }
+    $('#players-wrap').innerHTML = html;
+  }
+
+  function renderSettings() {
+    var locked = !!state.drawn;
+    var sel = $('#range');
+    if (!sel.options.length) {
+      sel.innerHTML = RANGES.map(function (r) { return '<option value="' + r + '">' + r + '</option>'; }).join('');
+    }
+    sel.value = String(state.range);
+    sel.disabled = locked;
+    var q = $('#quota');
+    if (document.activeElement !== q) q.value = (state.quotaCents / 100).toFixed(2).replace('.', ',');
+    q.disabled = locked;
+    $('#lock-note').hidden = !locked;
+
+    var R = state.range;
+    var total = comb(R, PICKS);
+    var np = state.players.length;
+    var p0 = comb(R - PICKS, PICKS) / total;
+    var p1 = PICKS * comb(R - PICKS, PICKS - 1) / total;
+    var p2 = 1 - p0 - p1;
+    var weeks = total / np;
+    var when = weeks < 104
+      ? 'circa una volta ogni ' + intFmt.format(Math.max(1, Math.round(weeks))) + ' settimane'
+      : 'circa una volta ogni ' + intFmt.format(Math.round(weeks / 52)) + ' anni';
+    var txt = 'Con i numeri da 1 a ' + R + ', un giocatore fa 5 su 5 una volta su ' + intFmt.format(total) +
+      '. Con ' + np + ' giocatori il jackpot esce ' + when + '. Per fare almeno 2 numeri: una volta su ' +
+      (1 / p2).toFixed(1).replace('.', ',') + ' a testa.';
+    if (weeks / 52 >= 20) txt += ' Tramandate la schedina ai nipoti.';
+    $('#odds').textContent = txt;
+  }
+
+  function renderHistory() {
+    var items = state.history.slice(revealing ? 1 : 0);
+    var el = $('#hist');
+    if (!items.length) {
+      el.innerHTML = '<p class="empty-note">Ancora nessuna estrazione. Si comincia dalla prima.</p>';
+      return;
+    }
+    var html = '<ul class="hist">';
+    items.forEach(function (h) {
+      var d = '';
+      try { d = new Date(h.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { d = ''; }
+      html += '<li><div class="h-top"><strong>Settimana ' + h.week + '</strong><time>' + esc(d) + '</time></div>' +
+        '<div class="mini">' + h.drawn.map(function (n, i) { return ballHtml(n, i, ''); }).join('') + '</div>' +
+        '<p>' + esc(h.summary) + '</p></li>';
+    });
+    html += '</ul>';
+
+    var tally = {};
+    items.forEach(function (h) { (h.winners || []).forEach(function (n) { tally[n] = (tally[n] || 0) + 1; }); });
+    var parts = Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a]; })
+      .map(function (n) { return esc(n) + ' ' + tally[n]; });
+    if (parts.length) html += '<p class="tally">Vittorie finora: ' + parts.join(', ') + '.</p>';
+    el.innerHTML = html;
+  }
+
+  function renderFooter() {
+    var html = '<p class="note">I dati restano salvati su questo dispositivo, nel browser in cui apri la pagina. ' +
+      'Usatela sempre dallo stesso telefono: ci vuole un solo cassiere.</p>';
+    if (confirmReset) {
+      html += '<p class="note tight">Cancello schedine, storico e jackpot?</p>' +
+        '<div class="p-actions"><button type="button" class="btn danger" data-act="reset">Sì, azzera tutto</button>' +
+        '<button type="button" class="btn quiet" data-act="cancel-reset">Annulla</button></div>';
+    } else {
+      html += '<button type="button" class="btn quiet" data-act="ask-reset">Azzera tutto</button>';
+    }
+    $('#foot').innerHTML = html;
+  }
+
+  function render() {
+    renderHero();
+    renderResult();
+    renderPlayers();
+    renderSettings();
+    renderHistory();
+    renderFooter();
+  }
+
+  function refocus(sel) {
+    var el = document.querySelector(sel);
+    if (el && !el.disabled) el.focus({ preventScroll: true });
+  }
+
+  /* ---------- Eventi ---------- */
+  var EDIT = ['toggle', 'num', 'done', 'random', 'remove', 'add', 'fill'];
+
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest('[data-act]');
+    if (!t) return;
+    var act = t.getAttribute('data-act');
+    var id = t.getAttribute('data-id');
+    if (EDIT.indexOf(act) !== -1 && state.drawn) return;
+
+    switch (act) {
+      case 'draw': draw(); break;
+      case 'new-same': newWeek(true); break;
+      case 'new-fresh': newWeek(false); break;
+      case 'toggle':
+        openId = openId === id ? null : id;
+        render();
+        refocus('[data-act="toggle"][data-id="' + id + '"]');
+        break;
+      case 'num':
+        var n = parseInt(t.getAttribute('data-n'), 10);
+        togglePick(id, n);
+        render();
+        refocus('[data-act="num"][data-id="' + id + '"][data-n="' + n + '"]');
+        break;
+      case 'done':
+        var cur = openId;
+        openId = null;
+        render();
+        if (cur) refocus('[data-act="toggle"][data-id="' + cur + '"]');
+        break;
+      case 'random':
+        state.picks[id] = sample(state.range, PICKS).sort(byNum);
+        save();
+        render();
+        refocus('[data-act="random"][data-id="' + id + '"]');
+        break;
+      case 'remove':
+        if (state.players.length > 2) {
+          state.players = state.players.filter(function (p) { return p.id !== id; });
+          delete state.picks[id];
+          if (openId === id) openId = null;
+          save();
+          render();
+        }
+        break;
+      case 'add':
+        if (state.players.length < MAX_PLAYERS) {
+          state.players.push({ id: uid(), name: 'Giocatore ' + (state.players.length + 1) });
+          save();
+          render();
+        }
+        break;
+      case 'fill':
+        state.players.forEach(function (p) {
+          if ((state.picks[p.id] || []).length !== PICKS) state.picks[p.id] = sample(state.range, PICKS).sort(byNum);
+        });
+        save();
+        render();
+        break;
+      case 'ask-reset':
+        confirmReset = true;
+        renderFooter();
+        refocus('[data-act="cancel-reset"]');
+        break;
+      case 'cancel-reset':
+        confirmReset = false;
+        renderFooter();
+        break;
+      case 'reset':
+        if (timer) { clearInterval(timer); timer = null; }
+        try { localStorage.removeItem(KEY); } catch (e) { /* ignora */ }
+        state = defaults();
+        openId = null;
+        revealCount = 0;
+        revealing = false;
+        confirmReset = false;
+        render();
+        window.scrollTo(0, 0);
+        break;
+    }
+  });
+
+  document.addEventListener('input', function (ev) {
+    var t = ev.target;
+    if (t.classList && t.classList.contains('name')) {
+      var id = t.getAttribute('data-id');
+      var p = state.players.filter(function (x) { return x.id === id; })[0];
+      if (p) {
+        p.name = t.value.trim() || 'Senza nome';
+        save();
+      }
+    }
+  });
+
+  $('#range').addEventListener('change', function (ev) {
+    if (state.drawn) return;
+    var r = parseInt(ev.target.value, 10);
+    if (RANGES.indexOf(r) === -1) return;
+    state.range = r;
+    Object.keys(state.picks).forEach(function (id) {
+      state.picks[id] = (state.picks[id] || []).filter(function (n) { return n <= r; });
+    });
+    save();
+    render();
+  });
+
+  $('#quota').addEventListener('change', function (ev) {
+    if (state.drawn) return;
+    var v = parseFloat(String(ev.target.value).replace(',', '.'));
+    if (isFinite(v) && v >= 0 && v <= 1000) state.quotaCents = Math.round(v * 100);
+    ev.target.value = (state.quotaCents / 100).toFixed(2).replace('.', ',');
+    save();
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
